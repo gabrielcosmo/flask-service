@@ -9,4 +9,5 @@ except:
 
 conn = f"mysql+pymysql://{acess['user']}:{acess['password']}@{acess['host']}" \
        f"/{acess['database']}?charset={acess['charset']}"
-engine = create_engine("mysql+pymysql://root:@localhost/idea-balloon?charset=utf8mb4", echo=True, future=True)
+engine = create_engine(conn, echo=True, future=True)
+

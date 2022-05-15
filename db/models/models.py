@@ -51,3 +51,8 @@ class NoteConfig(Enum):
     FAVORITE = "favorite"
     TAGS = "tags"
     USER_ID = "user_id"
+
+
+if __name__ == "__main__":
+    Base.metadata.create_all()
+

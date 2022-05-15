@@ -104,6 +104,3 @@ def delete_note(title):
     session.commit()
     session.close()
 #endregion
-
-
-print(select_all_users())
