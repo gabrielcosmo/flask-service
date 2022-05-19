@@ -1,7 +1,7 @@
-from factory import engine
+from .factory import engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
-from models.models import NoteModel, UserModel, UserConfig, NoteConfig
+from .models.models import NoteModel, UserModel, UserConfig, NoteConfig
 from datetime import datetime
 
 

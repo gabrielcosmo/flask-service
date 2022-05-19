@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from json import load
 
 try:
-    with open('config.json', 'r') as file:
+    with open('db/config.json', 'r') as file:
         acess = load(file)
 except:
     open('config.json', "x")
