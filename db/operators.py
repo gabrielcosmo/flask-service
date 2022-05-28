@@ -20,7 +20,7 @@ def insert_user(name, email, password, emailsec=""):
 def update_user(email, field: UserConfig, value):
     session = Session(engine)
 
-    sql = f"UPDATE `user` SET `{field.name}` = {value} WHERE `email`='{email}'"
+    sql = f"UPDATE `user` SET `{field.name}` = '{value}' WHERE `email`='{email}'"
     session.execute(text(sql))
 
     session.commit()
