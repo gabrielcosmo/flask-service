@@ -106,7 +106,6 @@ def user():
             else:
                 return make_response(jsonify({"messege": "found fields out context"}))
 
-
     elif request.method == Method.DELETE:
         try:
             _req = request.get_json()
@@ -118,8 +117,15 @@ def user():
             return make_response(jsonify({"messege": "fail"}))
 
         else:
-            if _user.password == _pw:
+            if _user is None:
+                return make_response(jsonify({"messege": "user not found"}))
+
+            elif _user.password == _pw:
                 delete_user(_email)
+                return make_response(jsonify({"messege": "sucess"}))
+
+            else:
+                return make_response(jsonify({"messege": f"invalid password for user {_user.name}"}))
 
 
 @app.route("/note", methods=[Method.POST, Method.PUT, Method.DELETE])
