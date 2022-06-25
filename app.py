@@ -21,8 +21,8 @@ def user():
     if request.method == Method.POST:
         try:
             _req = request.get_json()
-            _email = request.args['email']
-            _pw = request.args['password']
+            _email = _req.get('email')
+            _pw = _req.get('password')
 
         # caso o email ou a senha não sejam fornecidos
         except:
@@ -59,7 +59,7 @@ def user():
 
     elif request.method == Method.PUT:
         try:
-            _req = request.args
+            _req = request.get_json()
             _email = _req.get("email")
             _pw = _req.get("password")
             _user = select_user(_email)
@@ -128,10 +128,60 @@ def user():
                 return make_response(jsonify({"messege": f"invalid password for user {_user.name}"}))
 
 
-@app.route("/note", methods=[Method.POST, Method.PUT, Method.DELETE])
+@app.route("/note", methods=[Method.POST, Method.PUT, Method.DELETE, Method.GET])
 def note():
-    if request.method == Method.POST:
-        return
+    if request.method == Method.GET:
+        try:
+            user_id = request.args["userId"]
+            title = request.args["title"]
+            _note = select_note(title)
+
+        except:
+            return make_response(jsonify({"messege": f"Invalid values"}))
+
+        else:
+            if _note.user_id == int(user_id):
+                return make_response(jsonify({
+                        "id": _note.id,
+                        "title": _note.title,
+                        "text": _note.text,
+                        "record": _note.record,
+                        "modified": _note.modified,
+                        "favorite": _note.favorite,
+                        "tags": _note.tags
+                    })
+                )
+            else:
+                return make_response(jsonify({"messege": f"invalid user id for note {_note.title}"}))
+
+    elif request.method == Method.POST:
+
+        try:
+            _req = request.get_json()
+            user_id = _req.get("userId")
+            _title = _req.get("title")
+            _text = _req.get("text")
+
+        except:
+            return make_response(jsonify({"messege": f"Invalid values"}))
+
+        else:
+            _note = select_note(_title)
+            if _note is None:
+                insert_note(_title, _text, user_id)
+                _n = select_note(_title)
+
+                return make_response(jsonify({
+                    "id": _n.id,
+                    "title": _n.title,
+                    "text": _n.text,
+                    "record": _n.record,
+                    "modified": _n.modified,
+                    "favorite": _n.favorite,
+                    "tags": _n.tags
+                }))
+            else:
+                return make_response(jsonify({"messege": f"The title {_title} alredy exists"}))
 
     elif request.method == Method.PUT:
         return
