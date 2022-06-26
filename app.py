@@ -130,11 +130,14 @@ def user():
 
 @app.route("/note", methods=[Method.POST, Method.PUT, Method.DELETE, Method.GET])
 def note():
+    global validate
+    validate = True
+
     if request.method == Method.GET:
         try:
             user_id = request.args["userId"]
-            title = request.args["title"]
-            _note = select_note(title)
+            id = request.args["id"]
+            _note = select_note(id)
 
         except:
             return make_response(jsonify({"messege": f"Invalid values"}))
@@ -142,14 +145,14 @@ def note():
         else:
             if _note.user_id == int(user_id):
                 return make_response(jsonify({
-                        "id": _note.id,
-                        "title": _note.title,
-                        "text": _note.text,
-                        "record": _note.record,
-                        "modified": _note.modified,
-                        "favorite": _note.favorite,
-                        "tags": _note.tags
-                    })
+                    "id": _note.id,
+                    "title": _note.title,
+                    "text": _note.text,
+                    "record": _note.record,
+                    "modified": _note.modified,
+                    "favorite": _note.favorite,
+                    "tags": _note.tags
+                })
                 )
             else:
                 return make_response(jsonify({"messege": f"invalid user id for note {_note.title}"}))
@@ -159,6 +162,7 @@ def note():
         try:
             _req = request.get_json()
             user_id = _req.get("userId")
+            _id = _req.get("id")
             _title = _req.get("title")
             _text = _req.get("text")
 
@@ -166,10 +170,10 @@ def note():
             return make_response(jsonify({"messege": f"Invalid values"}))
 
         else:
-            _note = select_note(_title)
+            _note = select_note(_id)
             if _note is None:
                 insert_note(_title, _text, user_id)
-                _n = select_note(_title)
+                _n = select_note(_id)
 
                 return make_response(jsonify({
                     "id": _n.id,
@@ -181,13 +185,90 @@ def note():
                     "tags": _n.tags
                 }))
             else:
-                return make_response(jsonify({"messege": f"The title {_title} alredy exists"}))
+                return make_response(jsonify({"messege": f"Id invalid"}))
 
     elif request.method == Method.PUT:
-        return
+
+        try:
+            _req = request.get_json()
+            _id = _req.get("id")
+            obj_data = _req.get("userData")
+
+            _fields = []
+
+        except Exception as err:
+            return make_response(jsonify({
+                "messege": "Invalid fields or not send expected fields", "erro": f"{err}"
+            }))
+
+        else:
+            for k in obj_data.keys():
+                _fields.append(k)
+
+            _note = select_note(_id)
+            if _note is not None:
+                if NoteConfig.TITLE.value in obj_data.keys():
+                    if obj_data[NoteConfig.TITLE.value] != _note.title:
+                        update_note(_id, NoteConfig.TITLE, obj_data["title"])
+
+                elif NoteConfig.TEXT.value in obj_data.keys():
+                    if obj_data[NoteConfig.TEXT.value] != _note.text:
+                        update_note(_id, NoteConfig.TEXT, obj_data["text"])
+
+                elif NoteConfig.FAVORITE.value in obj_data.keys():
+                    valid = [0, 1]
+                    if obj_data[NoteConfig.FAVORITE.value] != _note.favorite and obj_data.get("favorite") in valid:
+                        update_note(_id, NoteConfig.FAVORITE, obj_data["favorite"])
+
+                elif NoteConfig.TAGS.value in obj_data.keys():
+                    if obj_data[NoteConfig.TAGS.value] != _note.tags:
+                        update_note(_id, NoteConfig.TAGS, obj_data["tags"])
+
+                else:
+                    validate = False
+
+        finally:
+            if validate:
+                return make_response(jsonify({"messege": "sucess"}))
+            else:
+                return make_response(jsonify({"messege": "found fields out context"}))
 
     elif request.method == Method.DELETE:
-        return
+
+        try:
+            _req = request.get_json()
+            _note_id = _req.get("id")
+            _email = _req.get("email")
+            _pw = _req.get("password")
+
+            _user = select_user(_email)
+            _note = select_note(_note_id)
+
+        except:
+            return make_response(jsonify({
+                "messege": "Expected fields or invalid values"
+            }))
+
+        else:
+            if (_user is not None) and (_note is not None):
+                if _user.password == _pw:
+                    if _note.user_id == _user.id:
+                        delete_note(_note_id)
+                        return make_response(jsonify({
+                            "messege": "Sucess"
+                        }))
+                    else:
+                        return make_response(jsonify({
+                            "messege": f"This user not is owner of note with id {_note_id}"
+                        }))
+                else:
+                    return make_response(jsonify({
+                        "messege": "User not identified"
+                    }))
+            else:
+                return make_response(jsonify({
+                    "messege": "User or Note  not identified"
+                }))
 
 
 if __name__ == '__main__':

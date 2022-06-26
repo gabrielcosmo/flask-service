@@ -68,19 +68,19 @@ def insert_note(title, text, user_id):
     session.close()
 
 
-def update_note(title, field: NoteConfig, value):
+def update_note(id, field: NoteConfig, value):
     session = Session(engine)
 
-    sql = f"UPDATE `note` SET `{field.name}` = '{value}' WHERE `title`='{title}'"
+    sql = f"UPDATE `note` SET `{field.name}` = '{value}' WHERE `id`='{id}'"
     session.execute(text(sql))
 
     session.commit()
     session.close()
 
 
-def select_note(note_title):
+def select_note(note_id):
     session = Session(engine)
-    select = session.query(NoteModel).where(NoteModel.title == note_title)
+    select = session.query(NoteModel).where(NoteModel.id == note_id)
 
     session.close()
 
@@ -95,10 +95,10 @@ def select_all_notes():
     return select
 
 
-def delete_note(title):
+def delete_note(id):
     session = Session(engine)
 
-    note = session.query(NoteModel).where(NoteModel.title == title)
+    note = session.query(NoteModel).where(NoteModel.id == id)
     session.delete(note.first())
 
     session.commit()
