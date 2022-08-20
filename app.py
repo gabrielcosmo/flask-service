@@ -18,6 +18,33 @@ def user():
     global validate  # variaável de validação para requisições PUT
     validate = False  # inicia-se como False
 
+    if request.method == Method.GET:
+        try:
+            email = request.args["email"]
+            _user = select_user(email)
+        except:
+            _users: list = select_all_users()
+            response = []
+            for _user in _users:
+                response.append({
+                    "id": _user.id,
+                    "name": _user.name,
+                    "email": _user.email,
+                    "password": _user.password,
+                    "emailsec": _user.emailsec,
+                    "record": _user.record
+                })
+            return make_response(jsonify(response))
+        else:
+            return make_response(jsonify({
+                "id": _user.id,
+                "name": _user.name,
+                "email": _user.email,
+                "password": _user.password,
+                "emailsec": _user.emailsec,
+                "record": _user.record
+            }))
+
     if request.method == Method.POST:
         try:
             _req = request.get_json()
