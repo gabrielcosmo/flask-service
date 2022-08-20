@@ -135,16 +135,14 @@ def note():
 
     if request.method == Method.GET:
         try:
-            user_id = request.args["userId"]
             id = request.args["id"]
             _note = select_note(id)
 
         except:
-            return make_response(jsonify({"messege": f"Invalid values"}))
-
-        else:
-            if _note.user_id == int(user_id):
-                return make_response(jsonify({
+            notes: list = select_all_notes()
+            response = []
+            for _note in notes:
+                response.append({
                     "id": _note.id,
                     "title": _note.title,
                     "text": _note.text,
@@ -153,9 +151,19 @@ def note():
                     "favorite": _note.favorite,
                     "tags": _note.tags
                 })
-                )
-            else:
-                return make_response(jsonify({"messege": f"invalid user id for note {_note.title}"}))
+            return make_response(jsonify(response))
+
+        else:
+            return make_response(jsonify({
+                "id": _note.id,
+                "title": _note.title,
+                "text": _note.text,
+                "record": _note.record,
+                "modified": _note.modified,
+                "favorite": _note.favorite,
+                "tags": _note.tags
+            })
+            )
 
     elif request.method == Method.POST:
 
