@@ -34,14 +34,16 @@ def user():
                 })
             return make_response(jsonify(response))
         else:
-            return make_response(jsonify({
-                "id": _user.id,
-                "name": _user.name,
-                "email": _user.email,
-                "password": _user.password,
-                "emailsec": _user.emailsec,
-                "record": _user.record
-            }))
+            if _user is not None:
+                return make_response(jsonify({
+                    "id": _user.id,
+                    "name": _user.name,
+                    "email": _user.email,
+                    "password": _user.password,
+                    "emailsec": _user.emailsec,
+                    "record": _user.record
+                }))
+            else: return make_response(jsonify({"messege": f"Email {email} not found"}))
 
     if request.method == Method.POST:
         try:
