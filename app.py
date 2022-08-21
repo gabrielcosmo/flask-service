@@ -16,9 +16,6 @@ class Method:
 
 @app.route("/user", methods=[Method.POST, Method.PUT, Method.DELETE, Method.GET])
 def user():
-    global validate  # variaável de validação para requisições PUT
-    validate = False  # inicia-se como False
-
     if request.method == Method.GET:
         try:
             email = request.args["email"]
@@ -51,16 +48,11 @@ def user():
             _req = request.get_json()
             _email = _req.get('email')
             _pw = _req.get('password')
-
-        # caso o email ou a senha não sejam fornecidos
         except:
             return make_response(jsonify({"messege": "fail"}))
-
         else:
             try:
-                # com valores para email e senha, procura-se o usuário
                 _user = select_user(_email)
-                # se validados, usuário e senha, e retornado os dados deste
                 if _pw == _user.password:
                     response = make_response(
                         jsonify({
@@ -75,64 +67,38 @@ def user():
                     response.headers["content-type"] = "application/json"
                     response.headers["status"] = "200 OK"
                     return response
-
-            # senão encontrado, um novo usário tentará ser cadastrado
             except:
                 try:
                     insert_user(request.args["name"], _email, _pw)
-
-                # obrigatoriamente, deve-se informar um nome para o usuário, caso não é lançada uma exceção
                 except:
                     return jsonify({"messege": "'name' not found during user criation"})
 
     elif request.method == Method.PUT:
         try:
-            _req = request.get_json()
-            _email = _req.get("email")
-            _pw = _req.get("password")
+            validate = True
+            _data = request.data.decode()
+            _req: dict = json.loads(_data)
+            _email = _req["email"]
             _user = select_user(_email)
 
         except:
-            return make_response(jsonify({"messege": "fail"}))
+            return make_response(jsonify({"messege": "Email not found"}))
 
-        else:
-            if _user.password == _pw:
-                user_data = (_req.get("user")).copy()
-                fields = []
-                validate = True  # os dados são válidos até que se comprove o contrário
-
-                for k in user_data.keys():  # os campos do corpo da requisição são registrados em 'fields'
-                    fields.append(k)
-
-                # region ANALISE DOS DADOS
-                """
-                + A primeira condicional testa se um dado campo foi informado no corpo da requisição (ex.: noma, email, etc.);
-                + A segunda se o valor desse campo informado difere do valor do campo correspondente na instância;
-                + Se nenhum campo que pertence a instãncia foi declarado no na requisição 'validate' é falso.
-                """
-                if UserConfig.NAME.value in fields:
-                    if user_data[UserConfig.NAME.value] != _user.name:
-                        update_user(_email, UserConfig.NAME, user_data["name"])
-
-                elif UserConfig.EMAIL.value in fields:
-                    if user_data[UserConfig.EMAIL.value] != _user.email:
-                        update_user(_email, UserConfig.EMAIL, user_data["email"])
-
-                elif UserConfig.PASSWORD.value in fields:
-                    if user_data[UserConfig.PASSWORD.value] != _user.password:
-                        update_user(_email, UserConfig.PASSWORD, user_data["password"])
-
-                elif UserConfig.EMAILSEC.value in fields:
-                    if user_data[UserConfig.EMAILSEC.value] != _user.emailsec:
-                        update_user(_email, UserConfig.EMAILSEC, user_data["emailsec"])
-                else:
-                    validate = False
-                # endregion
-        finally:
-            if validate:
-                return make_response(jsonify({"messege": "sucess"}))
+        try:
+            if _user is not None:
+                update_user(_email, UserConfig.NAME, _req["name"])
+                update_user(_email, UserConfig.EMAIL, _req["email"])
+                update_user(_email, UserConfig.EMAILSEC, _req["emailsec"])
+                update_user(_email, UserConfig.PASSWORD, _req["password"])
             else:
-                return make_response(jsonify({"messege": "found fields out context"}))
+                validate = False
+                return make_response(jsonify({"messege": "Email not found"}))
+        except:
+            validate = False
+            return make_response(jsonify({"messege": "Request format invalid!"}))
+
+        finally:
+            if validate: return make_response(jsonify({"messege": "sucess"}))
 
     elif request.method == Method.DELETE:
         try:
@@ -158,9 +124,6 @@ def user():
 
 @app.route("/note", methods=[Method.POST, Method.PUT, Method.DELETE, Method.GET])
 def note():
-    global validate
-    validate = True
-
     if request.method == Method.GET:
         try:
             id = request.args["id"]
@@ -225,6 +188,7 @@ def note():
 
     elif request.method == Method.PUT:
         try:
+            validate = True
             _data = request.data.decode()
             _req: dict = json.loads(_data)
             _id = _req["id"]
@@ -234,17 +198,21 @@ def note():
             return make_response(jsonify({"messege": "Id not found"}))
 
         try:
-            update_note(_id, NoteConfig.TITLE, _req["title"])
-            update_note(_id, NoteConfig.TEXT, _req["text"])
-            update_note(_id, NoteConfig.FAVORITE, _req["favorite"])
-            update_note(_id, NoteConfig.TAGS, _req["tags"])
-            update_note(_id, NoteConfig.MODIFIED, datetime.now())
-
+            if _note is not None:
+                update_note(_id, NoteConfig.TITLE, _req["title"])
+                update_note(_id, NoteConfig.TEXT, _req["text"])
+                update_note(_id, NoteConfig.FAVORITE, _req["favorite"])
+                update_note(_id, NoteConfig.TAGS, _req["tags"])
+                update_note(_id, NoteConfig.MODIFIED, datetime.now())
+            else:
+                validate = False
+                return make_response(jsonify({"messege": "Id not found"}))
         except:
+            validate = False
             return make_response(jsonify({"messege": "Request format invalid!"}))
 
         finally:
-            return make_response(jsonify({"messege": "sucess"}))
+            if validate: return make_response(jsonify({"messege": "sucess"}))
 
     elif request.method == Method.DELETE:
 
