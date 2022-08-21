@@ -51,6 +51,7 @@ class NoteConfig(Enum):
     FAVORITE = "favorite"
     TAGS = "tags"
     USER_ID = "user_id"
+    MODIFIED = "modified"
 
 
 if __name__ == "__main__":

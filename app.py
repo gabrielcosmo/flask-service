@@ -1,5 +1,6 @@
 from flask import Flask, request, make_response, jsonify
 import json
+import datetime
 from db.operators import *
 from db.models.models import UserConfig, NoteConfig
 
@@ -223,50 +224,27 @@ def note():
                 return make_response(jsonify({"messege": f"Id invalid"}))
 
     elif request.method == Method.PUT:
+        try:
+            _data = request.data.decode()
+            _req: dict = json.loads(_data)
+            _id = _req["id"]
+            _note = select_note(_id)
+
+        except:
+            return make_response(jsonify({"messege": "Id not found"}))
 
         try:
-            _req = request.get_json()
-            _id = _req.get("id")
-            obj_data = _req.get("userData")
+            update_note(_id, NoteConfig.TITLE, _req["title"])
+            update_note(_id, NoteConfig.TEXT, _req["text"])
+            update_note(_id, NoteConfig.FAVORITE, _req["favorite"])
+            update_note(_id, NoteConfig.TAGS, _req["tags"])
+            update_note(_id, NoteConfig.MODIFIED, datetime.now())
 
-            _fields = []
-
-        except Exception as err:
-            return make_response(jsonify({
-                "messege": "Invalid fields or not send expected fields", "erro": f"{err}"
-            }))
-
-        else:
-            for k in obj_data.keys():
-                _fields.append(k)
-
-            _note = select_note(_id)
-            if _note is not None:
-                if NoteConfig.TITLE.value in obj_data.keys():
-                    if obj_data[NoteConfig.TITLE.value] != _note.title:
-                        update_note(_id, NoteConfig.TITLE, obj_data["title"])
-
-                elif NoteConfig.TEXT.value in obj_data.keys():
-                    if obj_data[NoteConfig.TEXT.value] != _note.text:
-                        update_note(_id, NoteConfig.TEXT, obj_data["text"])
-
-                elif NoteConfig.FAVORITE.value in obj_data.keys():
-                    valid = [0, 1]
-                    if obj_data[NoteConfig.FAVORITE.value] != _note.favorite and obj_data.get("favorite") in valid:
-                        update_note(_id, NoteConfig.FAVORITE, obj_data["favorite"])
-
-                elif NoteConfig.TAGS.value in obj_data.keys():
-                    if obj_data[NoteConfig.TAGS.value] != _note.tags:
-                        update_note(_id, NoteConfig.TAGS, obj_data["tags"])
-
-                else:
-                    validate = False
+        except:
+            return make_response(jsonify({"messege": "Request format invalid!"}))
 
         finally:
-            if validate:
-                return make_response(jsonify({"messege": "sucess"}))
-            else:
-                return make_response(jsonify({"messege": "found fields out context"}))
+            return make_response(jsonify({"messege": "sucess"}))
 
     elif request.method == Method.DELETE:
 

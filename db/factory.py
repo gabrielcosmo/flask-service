@@ -10,4 +10,4 @@ except:
 conn = f"mysql+pymysql://{acess['user']}:{acess['password']}@{acess['host']}" \
        f"/{acess['database']}?charset={acess['charset']}"
 engine = create_engine(conn, echo=True, future=True)
-
+engine.echo = False
